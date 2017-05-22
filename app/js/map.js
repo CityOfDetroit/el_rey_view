@@ -15,8 +15,8 @@ var parcelData = {
 };
 var currentURLParams = {
   'zoom'        : 0,
-  'lat'         : 0,
   'lng'         : 0,
+  'lat'         : 0,
   'parcel'      : '',
   'district'    : '',
   'neighborhood': ''
@@ -38,6 +38,7 @@ window.onload = function(){
   console.log(getQueryVariable('neighborhood'));
   console.log(getQueryVariable('district'));
   if(getQueryVariable('zoom')){
+    currentURLParams.zoom = getQueryVariable('zoom');
     if (getQueryVariable('lat')) {
       map.flyTo({
           center: [getQueryVariable('lng'),getQueryVariable('lat')],
@@ -57,10 +58,13 @@ window.onload = function(){
       switch (true) {
         case getQueryVariable('district') !== false:
           console.log('load district panel');
-          updateURLParams([getQueryVariable('zoom'),getQueryVariable('lat'),getQueryVariable('lng'),'',getQueryVariable('district')]);
+          updateURLParams([getQueryVariable('zoom'),getQueryVariable('lng'),getQueryVariable('lat'),'',getQueryVariable('district')]);
+          mapPanel.createFeatureData();
           break;
         case getQueryVariable('neighborhood') !== false:
-
+          console.log('load neighborhood panel');
+          updateURLParams([getQueryVariable('zoom'),getQueryVariable('lng'),getQueryVariable('lat'),'','',getQueryVariable('neighborhood')]);
+          mapPanel.createFeatureData();
           break;
         case getQueryVariable('parcel') !== false:
 
@@ -114,6 +118,17 @@ window.onload = function(){
         console.log('there is parcel');
       }else{
         console.log('no parcel');
+        if(getQueryVariable('district')){
+          console.log('there is district');
+        }else{
+          console.log('no district');
+          if(getQueryVariable('neighborhood')){
+            console.log('there is neighborhood');
+          }else{
+            console.log('no neighborhood - loading city');
+            mapPanel.createPanel('city');
+          }
+        }
       }
     }else{
       mapPanel.createPanel('city');
@@ -124,8 +139,12 @@ var getQueryVariable = function getQueryVariable(variable){
    var query = window.location.search.substring(1);
    var vars = query.split("&");
    for (var i=0;i<vars.length;i++) {
-           var pair = vars[i].split("=");
-           if(pair[0] == variable){return pair[1];}
+     var pair = vars[i].split("=");
+     if(pair[0] == variable){
+       if(pair[1] !== ''){
+        return pair[1];
+       }
+     }
    }
    return(false);
 };
@@ -150,11 +169,19 @@ var updateURLParams = function updateURLParams(params){
       currentURLParams.lat = params[2];
       currentURLParams.parcel = params[3];
       break;
-    default:
+    case params.length === 5:
       currentURLParams.zoom = params[0];
       currentURLParams.lng = params[1];
       currentURLParams.lat = params[2];
       currentURLParams.district = params[4];
+      break;
+    default:
+      currentURLParams.zoom = params[0];
+      currentURLParams.lng = params[1];
+      currentURLParams.lat = params[2];
+      currentURLParams.parcel = params[3];
+      currentURLParams.district = params[4];
+      currentURLParams.neighborhood = params[5];
   }
   console.log(currentURLParams);
   var newTempURL = '';
@@ -339,7 +366,7 @@ var closeInfo = function closeInfo() {
           return t;
       }
   });
-  updateURLParams([-83.15,42.36]);
+  updateURLParams(['',-83.15,42.36,'','','']);
 };
 var addDataLayers = function addDataLayers(){
   map.addSource('parcels', {
