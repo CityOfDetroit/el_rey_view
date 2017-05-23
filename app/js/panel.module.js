@@ -1,5 +1,26 @@
 "use strict";
 var panelModule = (function(){
+  var flyToPosition = function flyToPosition(params){
+    console.log(params);
+    map.flyTo({
+        center: [params.lng, params.lat],
+        zoom: params.zoom,
+        bearing: 0,
+
+        // These options control the flight curve, making it move
+        // slowly and zoom out almost completely before starting
+        // to pan.
+        speed: 2, // make the flying slow
+        curve: 1, // change the speed at which it zooms out
+
+        // This can be any easing function: it takes a number between
+        // 0 and 1 and returns another number between 0 and 1.
+        easing: function (t) {
+            return t;
+        }
+    });
+      console.log(params);
+  };
   var setTempData = function(obj){
     panel.tempData.registrationNumbers = obj.registrationNumbers;
     panel.tempData.totalNumbers = obj.totalNumbers;
@@ -156,23 +177,7 @@ var panelModule = (function(){
             setTempHTML(localNeighborhoodHTML);
             loadPanel();
           });
-          map.flyTo({
-              center: [currentURLParams.lng, currentURLParams.lat],
-              zoom: currentURLParams.zoom,
-              bearing: 0,
-
-              // These options control the flight curve, making it move
-              // slowly and zoom out almost completely before starting
-              // to pan.
-              speed: 2, // make the flying slow
-              curve: 1, // change the speed at which it zooms out
-
-              // This can be any easing function: it takes a number between
-              // 0 and 1 and returns another number between 0 and 1.
-              easing: function (t) {
-                  return t;
-              }
-          });
+          flyToPosition(currentURLParams);
           break;
         case this.displayType === 'district':
           setTempHTML('');
@@ -217,23 +222,7 @@ var panelModule = (function(){
             setTempHTML(localDistrictHTML);
             loadPanel();
           });
-          map.flyTo({
-              center: [currentURLParams.lng, currentURLParams.lat],
-              zoom: currentURLParams.zoom,
-              bearing: 0,
-
-              // These options control the flight curve, making it move
-              // slowly and zoom out almost completely before starting
-              // to pan.
-              speed: 2, // make the flying slow
-              curve: 1, // change the speed at which it zooms out
-
-              // This can be any easing function: it takes a number between
-              // 0 and 1 and returns another number between 0 and 1.
-              easing: function (t) {
-                  return t;
-              }
-          });
+          flyToPosition(currentURLParams);
           break;
         default:
           setTempHTML('');

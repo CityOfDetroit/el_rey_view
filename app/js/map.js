@@ -38,27 +38,12 @@ window.onload = function(){
   console.log(getQueryVariable('neighborhood'));
   console.log(getQueryVariable('district'));
   if(getQueryVariable('zoom')){
-    currentURLParams.zoom = getQueryVariable('zoom');
     if (getQueryVariable('lat')) {
-      map.flyTo({
-          center: [getQueryVariable('lng'),getQueryVariable('lat')],
-          zoom: getQueryVariable('zoom'),
-          bearing: 0,
-          // These options control the flight curve, making it move
-          // slowly and zoom out almost completely before starting
-          // to pan.
-          speed: 2, // make the flying slow
-          curve: 1, // change the speed at which it zooms out
-          // This can be any easing function: it takes a number between
-          // 0 and 1 and returns another number between 0 and 1.
-          easing: function (t) {
-              return t;
-          }
-      });
       switch (true) {
         case getQueryVariable('district') !== false:
           console.log('load district panel');
           updateURLParams([getQueryVariable('zoom'),getQueryVariable('lng'),getQueryVariable('lat'),'',getQueryVariable('district')]);
+          console.log(currentURLParams);
           mapPanel.createFeatureData();
           break;
         case getQueryVariable('neighborhood') !== false:
@@ -71,8 +56,22 @@ window.onload = function(){
           break;
         default:
           mapPanel.createPanel('city');
+          map.flyTo({
+              center: [getQueryVariable('lng'),getQueryVariable('lat')],
+              zoom: getQueryVariable('zoom'),
+              bearing: 0,
+              // These options control the flight curve, making it move
+              // slowly and zoom out almost completely before starting
+              // to pan.
+              speed: 2, // make the flying slow
+              curve: 1, // change the speed at which it zooms out
+              // This can be any easing function: it takes a number between
+              // 0 and 1 and returns another number between 0 and 1.
+              easing: function (t) {
+                  return t;
+              }
+          });
       }
-
     }else{
       map.flyTo({
           center: [-83.15, 42.36],
