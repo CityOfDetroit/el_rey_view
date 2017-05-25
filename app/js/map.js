@@ -52,7 +52,8 @@ window.onload = function(){
           mapPanel.createFeatureData();
           break;
         case getQueryVariable('parcel') !== false:
-
+          updateURLParams([getQueryVariable('zoom'),getQueryVariable('lng'),getQueryVariable('lat'),getQueryVariable('parcel'),'','']);
+          mapPanel.createFeatureData();
           break;
         default:
           mapPanel.createPanel('city');
@@ -203,40 +204,6 @@ var updateURLParams = function updateURLParams(params){
       window.history.pushState({path:newurl},'',newurl);
   }
 };
-var switchParcelDataViews = function switchParcelDataViews(e){
-  //cons.log(e.getAttribute('data-view'));
-  switch (e.getAttribute('data-view')) {
-    case 'owner':
-      var tempOwnerData = '';
-      tempOwnerData += '<article class="info-items"><span>OWNER CITY</span> ' + parcelData['parcel-data'].ownercity + '</article>';
-      tempOwnerData += '<article class="info-items"><span>OWNER NAME</span> ' + parcelData['parcel-data'].ownername1 + '</article>';
-      tempOwnerData += '<article class="info-items"><span>OWNER STATE</span> ' + parcelData['parcel-data'].ownerstate + '</article>';
-      tempOwnerData += '<article class="info-items"><span>OWNER ADDRESS</span> ' + parcelData['parcel-data'].ownerstreetaddr + '</article>';
-      tempOwnerData += '<article class="info-items"><span>OWNER ZIP</span> ' + parcelData['parcel-data'].ownerzip + '</article>';
-      document.querySelector('.parcel-info.display-section').innerHTML = tempOwnerData;
-      //cons.log(parcelData['parcel-data']);
-      break;
-    case 'building':
-      var tempBuldingData = '';
-      tempBuldingData += '<article class="info-items"><span>PARCEL NUMBER</span> ' + parcelData['parcel-data'].pnum + '</article>';
-      tempBuldingData += '<article class="info-items"><span>BASEMENT AREA</span> ' + parcelData['parcel-data'].resb_basementarea + '</article>';
-      tempBuldingData += '<article class="info-items"><span>BUILDING CLASS</span> ' + parcelData['parcel-data'].resb_bldgclass + '</article>';
-      tempBuldingData += '<article class="info-items"><span>CALCULATED VALUE</span> $' + parseInt(parcelData['parcel-data'].resb_calcvalue).toLocaleString() + '</article>';
-      tempBuldingData += '<article class="info-items"><span>EXTERIOR</span> ' + parcelData['parcel-data'].resb_exterior + '</article>';
-      tempBuldingData += '<article class="info-items"><span>NUMBER OF FIREPLACES</span> ' + parcelData['parcel-data'].resb_fireplaces + '</article>';
-      tempBuldingData += '<article class="info-items"><span>FLOOR AREA</span> ' + parcelData['parcel-data'].resb_floorarea.toLocaleString() + '</article>';
-      tempBuldingData += '<article class="info-items"><span>GARAGE AREA</span> ' + parcelData['parcel-data'].resb_garagearea.toLocaleString() + '</article>';
-      tempBuldingData += '<article class="info-items"><span>GARAGE TYPE</span> ' + parcelData['parcel-data'].resb_gartype + '</article>';
-      tempBuldingData += '<article class="info-items"><span>GROUND AREA</span> ' + parcelData['parcel-data'].resb_groundarea.toLocaleString() + '</article>';
-      tempBuldingData += '<article class="info-items"><span>HALF BATHS</span> ' + parcelData['parcel-data'].resb_halfbaths + '</article>';
-      tempBuldingData += '<article class="info-items"><span>NUMBER OF BEDROOMS</span> ' + parcelData['parcel-data'].resb_nbed + '</article>';
-      document.querySelector('.parcel-info.display-section').innerHTML = tempBuldingData;
-      //cons.log(parcelData['parcel-data']);
-      break;
-    default:
-
-  }
-};
 var startGeocoderResults = function startGeocoderResults(ev){
   document.querySelector('.overall-number').innerHTML = '';
   document.querySelector('.parcel-info').innerHTML = '';
@@ -304,7 +271,7 @@ var startGeocoderResults = function startGeocoderResults(ev){
             tempParcelDataHTML += '<cofc><strong>Certificate of Compliance</strong></cofc></article>';
         }
         document.querySelector('.parcel-info.rental-info').innerHTML = tempParcelDataHTML;
-        document.querySelector('.info-container > .rental').innerHTML = '<a href="https://app.smartsheet.com/b/form?EQBCT=efa41296fdc646dcadc3cbca2d6fd6ac" target="_blank"><article class="form-btn">SUBMIT A RENTER\'S COMPLAINT</article></a>';
+        document.querySelector('.info-container > .rental').innerHTML = '<a href="https://app.smartsheet.com/b/form?EQBCT=91c0d55e47064373835ce198802764e2" target="_blank"><article class="form-btn">SUBMIT A RENTER\'S COMPLAINT</article></a>';
         document.querySelector('.info-container > .not-rental').innerHTML = '';
         parcelData['rental-status'] = Rental_Inspections.features[0].attributes.ACTION_DESCRIPTION;
       }else{
