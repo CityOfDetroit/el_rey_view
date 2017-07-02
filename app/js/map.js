@@ -1,12 +1,15 @@
 "use strict";
 // ================ variables ======================
 var mapPanel = Object.create(panelModule);
+var survey = Object.create(surveyModule);
+var activeView = 'data-results-view-btn';
+var activeBoundary = 'district';
 var bounds = [
     [		-83.3437, 	42.2102], // Southwest coordinates
     [		-82.8754, 	42.5197]  // Northeast coordinates
 ];
 var baseMapStyles = [
-  'cj2m68vfx001s2rs0nyherr29',
+  'ciymfavyb00072sqe0bu9rwht',
   'cj2m1f9k400132rmr1jhjq2gn'
 ];
 var parcelData = {
@@ -19,7 +22,8 @@ var currentURLParams = {
   'lat'         : 0,
   'parcel'      : '',
   'district'    : '',
-  'neighborhood': ''
+  'neighborhood': '',
+  'survey'      : ''
 };
 mapboxgl.accessToken = 'pk.eyJ1Ijoic2x1c2Fyc2tpZGRldHJvaXRtaSIsImEiOiJjaXZsNXlwcXQwYnY5MnlsYml4NTJ2Mno4In0.8wKUnlMPIlxq-eWH0d10-Q';
 var map = new mapboxgl.Map({
@@ -29,7 +33,73 @@ var map = new mapboxgl.Map({
   zoom: 11.5, // starting zoom
   keyboard : true
 });
+var markerSource = {
+  type: "geojson",
+  data: {
+    type: "Feature",
+    geometry: {
+      type: "Point",
+      coordinates: [12.695600612967427, 56.04351888068181]
+    },
+    properties: {}
+  }
+};
+var mly = new Mapillary.Viewer(
+  "survey",
+  "WGl5Z2dkVHEydGMwWlNMOHUzVHR4QToyMmQ4OTRjYzczZWFiYWVi",
+  null
+);
+var marker;
+var currentToggleID = 'c-w-vernor';
 // ================== functions =====================
+map.on("style.load", function() {
+  map.addSource("markers", markerSource);
+  map.addLayer({
+    id: "markers",
+    type: "symbol",
+    source: "markers",
+    layout: {
+      "icon-image": "car-15"
+    }
+  });
+});
+mly.on(Mapillary.Viewer.nodechanged, function(node) {
+  updateURLParams(['','','','','','',node.key]);
+  document.querySelector('#survey-note-card > .street-name > h1').innerHTML = 'LOADING<span class="dot-1">.</span><span class="dot-2">.</span><span class="dot-3">.</span>';
+  var lngLat = [node.latLon.lon, node.latLon.lat];
+  var data = {
+    type: "Feature",
+    geometry: {
+      type: "Point",
+      coordinates: lngLat
+    },
+    properties: {
+      "marker-symbol": "marker"
+    }
+  };
+  map.getSource("markers").setData(data);
+  setTimeout(function() {
+    map.flyTo({
+        center: lngLat,
+        zoom: 17,
+        bearing: 0,
+
+        // These options control the flight curve, making it move
+        // slowly and zoom out almost completely before starting
+        // to pan.
+        speed: 2, // make the flying slow
+        curve: 1, // change the speed at which it zooms out
+
+        // This can be any easing function: it takes a number between
+        // 0 and 1 and returns another number between 0 and 1.
+        easing: function (t) {
+            return t;
+        }
+    });
+  }, 700);
+  survey.getParcelData(lngLat);
+});
+window.addEventListener('resize', function() { mly.resize(); map.resize(); });
 window.onload = function(){
   console.log(getQueryVariable('zoom'));
   console.log(getQueryVariable('lat'));
@@ -38,7 +108,7 @@ window.onload = function(){
   console.log(getQueryVariable('neighborhood'));
   console.log(getQueryVariable('district'));
   if(getQueryVariable('zoom')){
-    if (getQueryVariable('lat')) {
+    if (getQueryVariable('lat') && (getQueryVariable('lat') !== '0')) {
       switch (true) {
         case getQueryVariable('district') !== false:
           console.log('load district panel');
@@ -149,8 +219,8 @@ var getQueryVariable = function getQueryVariable(variable){
    return(false);
 };
 var updateURLParams = function updateURLParams(params){
-  console.log(params);
-  console.log(params.length);
+  // console.log(params);
+  // console.log(params.length);
   switch (true) {
     case params.length === 1:
       currentURLParams.zoom = params[0];
@@ -175,20 +245,23 @@ var updateURLParams = function updateURLParams(params){
       currentURLParams.lat = params[2];
       currentURLParams.district = params[4];
       break;
-    default:
+    case params.length === 6:
       currentURLParams.zoom = params[0];
       currentURLParams.lng = params[1];
       currentURLParams.lat = params[2];
       currentURLParams.parcel = params[3];
       currentURLParams.district = params[4];
       currentURLParams.neighborhood = params[5];
+      break;
+    default:
+      currentURLParams.survey = params[6];
   }
-  console.log(currentURLParams);
+  // console.log(currentURLParams);
   var newTempURL = '';
   for (var property in currentURLParams) {
       if (currentURLParams.hasOwnProperty(property)) {
-          console.log(property);
-          console.log(currentURLParams[property]);
+          // console.log(property);
+          // console.log(currentURLParams[property]);
           switch (true) {
             case property !== 0:
               newTempURL += property + '=' + currentURLParams[property] + '&'
@@ -198,7 +271,7 @@ var updateURLParams = function updateURLParams(params){
           }
       }
   }
-  console.log(newTempURL);
+  // console.log(newTempURL);
   if (history.pushState) {
       var newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?' + newTempURL;
       window.history.pushState({path:newurl},'',newurl);
@@ -252,7 +325,7 @@ var startGeocoderResults = function startGeocoderResults(ev){
   });
   // console.log(newTempAddr);
   //================ get parcel data ==========================
-  $.getJSON('http://gis.detroitmi.gov/arcgis/rest/services/DoIT/CompositeGeocoder/GeocodeServer/findAddressCandidates?Street=&City=&ZIP=&SingleLine='+ newTempAddr +'&category=&outFields=User_fld&maxLocations=&outSR=&searchExtent=&location=&distance=&magicKey=&f=pjson' , function( data ) {
+  $.getJSON('https://gis.detroitmi.gov/arcgis/rest/services/DoIT/CompositeGeocoder/GeocodeServer/findAddressCandidates?Street=&City=&ZIP=&SingleLine='+ newTempAddr +'&category=&outFields=User_fld&maxLocations=&outSR=&searchExtent=&location=&distance=&magicKey=&f=pjson' , function( data ) {
     //console.log(data.candidates[0].attributes.User_fld);
     map.setFilter("parcel-fill-hover", ["==", "parcelno", data.candidates[0].attributes.User_fld]);
     $.getJSON("https://services2.arcgis.com/qvkbeam7Wirps6zC/ArcGIS/rest/services/Rental_Inspections/FeatureServer/0/query?where="+ encodeURI('ParcelNo=\''+data.candidates[0].attributes.User_fld+'\'')+"&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&resultType=none&distance=0.0&units=esriSRUnit_Meter&returnGeodetic=false&outFields=ACTION_DESCRIPTION%2C+ParcelNo%2C+CSM_RECD_DATE&returnGeometry=true&multipatchOption=xyFootprint&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&returnExtentOnly=false&returnDistinctValues=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&resultOffset=&resultRecordCount=&returnZ=false&returnM=false&quantizationParameters=&sqlFormat=none&f=pjson&token=", function( Rental_Inspections ) {
@@ -279,7 +352,7 @@ var startGeocoderResults = function startGeocoderResults(ev){
         document.querySelector('.info-container > .not-rental').innerHTML = '<a href="https://app.smartsheet.com/b/form?EQBCT=7b3746bd20a048a5919ae07bd9ed89de" target="_blank"><article class="form-btn">REGISTER MY RENTAL</article></a>';
         parcelData['rental-status'] = 'Not a Rental';
       }
-      $.getJSON("http://apis.detroitmi.gov/assessments/parcel/"+data.candidates[0].attributes.User_fld.replace(/\./g,'_')+"/", function( parcel ) {
+      $.getJSON("https://apis.detroitmi.gov/assessments/parcel/"+data.candidates[0].attributes.User_fld.replace(/\./g,'_')+"/", function( parcel ) {
         //console.log(parcel);
         document.querySelector('.info-container > .street-name').innerHTML = parcel.propstreetcombined;
         // parcelData['owner-display'] += '<article class="info-items"><span>OWNER</span> ' + parcel.ownername1 + '</article>';
@@ -312,7 +385,7 @@ var toggleBaseMap = function toggleBaseMap(e) {
 var closeInfo = function closeInfo() {
   //console.log('closing');
   // (document.querySelector('#info').className === 'active') ? document.querySelector('#info').className = '' : document.querySelector('#info').className = 'active';
-  (document.querySelector('.info-container > .street-name').innerHTML === 'CITY OF DETROIT') ? document.querySelector('#info').className = '' : mapPanel.createPanel('city');
+  mapPanel.createPanel('city');
   document.querySelector('.mapboxgl-ctrl-geocoder > input[type="text"]').value = '';
   //console.log('going back to city view');
   map.flyTo({
@@ -334,6 +407,136 @@ var closeInfo = function closeInfo() {
   });
   updateURLParams(['',-83.15,42.36,'','','']);
 };
+var closeSurvey = function closeSurvey() {
+  console.log('closing survery');
+  if(document.querySelector('#info').className !== 'active'){
+    document.querySelector('#info').className = 'active';
+    mapPanel.createPanel('city');
+  }
+  console.log(document.querySelector('#info').className === 'active');
+  (document.querySelector('#survey').className === 'active') ? document.querySelector('#survey').className = '' : 0;
+  (document.querySelector('#survey-note-card').className === '') ? 0 : document.querySelector('#survey-note-card').className = '';
+  (document.querySelector('#map').className === 'mapboxgl-map') ? 0 : document.querySelector('#map').className = 'mapboxgl-map';
+  (document.querySelector('#legend').className === 'survey-on') ? document.querySelector('#legend').className = '' : 0;
+  (document.querySelector('.mapboxgl-control-container').className === 'mapboxgl-control-container') ? 0 : document.querySelector('.mapboxgl-control-container').className = 'mapboxgl-control-container';
+  document.querySelector('.mapboxgl-ctrl-geocoder > input[type="text"]').value = '';
+  setTimeout(function() {
+    mly.resize();
+    map.resize();
+  }, 500);
+  //console.log('going back to city view');
+  map.flyTo({
+      center: [-83.15, 42.36], // starting position
+      zoom: 11.5,
+      bearing: 0,
+
+      // These options control the flight curve, making it move
+      // slowly and zoom out almost completely before starting
+      // to pan.
+      speed: 2, // make the flying slow
+      curve: 1, // change the speed at which it zooms out
+
+      // This can be any easing function: it takes a number between
+      // 0 and 1 and returns another number between 0 and 1.
+      easing: function (t) {
+          return t;
+      }
+  });
+  updateURLParams(['','','','','','','']);
+  updateURLParams(['',-83.15,42.36,'','','']);
+  survey.clearSurvey();
+};
+var verifySurveyClose = function verifySurveyClose(action){
+  console.log(action.target.id);
+  (action.target.id === 'end-survey-btn') ? closeSurvey() : 0;
+  (document.querySelector('#end-survey-popup').className === 'active') ? document.querySelector('#end-survey-popup').className = '' : 0;
+};
+var showSurveyClose = function showSurveyClose(){
+  (document.querySelector('#end-survey-popup').className === 'active') ? 0 : document.querySelector('#end-survey-popup').className = 'active';
+};
+document.getElementById('close-survey-btn').addEventListener('click',showSurveyClose);
+document.querySelectorAll('.end-survey-buttons > span').forEach(function(item){
+  item.addEventListener('click', function(action){
+    verifySurveyClose(action);
+  });
+});
+var changeToggleLayer = function changeToggleLayer(id){
+  currentToggleID = id;
+  map.removeLayer('need-survey');
+  addToggleLayer();
+};
+document.querySelectorAll('.layer-controller-toggle').forEach(function(item){
+  item.addEventListener('click', function(toggle){
+    currentToggleID = toggle.target.id;
+    addToggleLayer();
+  });
+});
+var addToggleLayer = function addToggleLayer(){
+  var corridorName = '';
+  switch (currentToggleID) {
+    case "c-w-vernor":
+      corridorName = 'W+Vernor';
+      break;
+    case "c-e-vernor":
+      corridorName = 'E+Vernor';
+      break;
+    case "c-michigan":
+      corridorName = 'Michigan';
+      break;
+    case "c-woodward":
+      corridorName = 'Woodward';
+      break;
+    case "c-livernois":
+      corridorName = 'Livernois';
+      break;
+    case "c-grand-river":
+      corridorName = 'Grand+River';
+      break;
+    case "c-seven-mile":
+      corridorName = 'Seven+Mile';
+      break;
+    case "c-mcnichols":
+      corridorName = 'McNichols';
+      break;
+    case "c-gratiot":
+      corridorName = 'Gratiot';
+      break;
+    case "c-jefferson":
+      corridorName = 'Jefferson';
+      break;
+    case "c-warren":
+      corridorName = 'Warren';
+      break;
+    default:
+
+  }
+  console.log(encodeURI(corridorName));
+  $.getJSON("https://gis.detroitmi.gov/arcgis/rest/services/DoIT/Corridor_Boundaries/MapServer/0/query?where=Corridor%3D%27"+ corridorName +"%27&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=4326&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&f=geojson", function( corridor ) {
+    console.log(corridor);
+    var simplifiedCorridor = turf.simplify(corridor.features[0], 0.003, false);
+    console.log(simplifiedCorridor);
+    var arcCorridorPolygon = Terraformer.ArcGIS.convert(simplifiedCorridor.geometry);
+    console.log(arcCorridorPolygon);
+     $.getJSON("https://gis.detroitmi.gov/arcgis/rest/services/DoIT/Commercial/MapServer/0/query?where=1%3D1&text=&objectIds=&time=&geometry="+ encodeURI(JSON.stringify(arcCorridorPolygon))+"&geometryType=esriGeometryPolygon&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=4326&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&f=json", function( data ) {
+       console.log(data);
+       var new_Filter = ["in",'parcelno'];
+       for (var i = 0; i < data.features.length; i++) {
+         new_Filter.push(data.features[i].attributes.PARCELNO);
+       }
+       map.addLayer({
+        "id": "need-survey",
+        "type": "fill",
+        "source": "parcels",
+        'source-layer': 'parcelsgeojson',
+        'filter': new_Filter,
+        "paint": {
+          "fill-color":"#DF5800",
+          "fill-opacity":0.3
+        }
+      });
+     });
+  });
+};
 var addDataLayers = function addDataLayers(){
   map.addSource('parcels', {
     type: 'vector',
@@ -353,7 +556,7 @@ var addDataLayers = function addDataLayers(){
   });
   map.addSource('neighborhoods-labels', {
     type: 'geojson',
-    data: 'http://gis.detroitmi.gov/arcgis/rest/services/NeighborhoodsApp/Neighborhoods/MapServer/0/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=2898&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=4326&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&f=geojson'
+    data: 'https://gis.detroitmi.gov/arcgis/rest/services/NeighborhoodsApp/Neighborhoods/MapServer/0/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=2898&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=4326&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&f=geojson'
   });
   map.addLayer({
     'id': 'councils_labels',
@@ -461,66 +664,13 @@ var addDataLayers = function addDataLayers(){
      "source": "parcels",  minzoom: 15.5,
      "layout": {},
      "paint": {
-       "line-color": '#a40040'
+       "line-color": '#BD0019',
+       "line-width": 3
      },
      'source-layer': 'parcelsgeojson',
      "filter": ["==", "parcelno", ""]
    });
-
-   $.getJSON("https://services2.arcgis.com/qvkbeam7Wirps6zC/ArcGIS/rest/services/Rental_Inspections/FeatureServer/0/query?where=ACTION_DESCRIPTION%3D%27Issue+City+C+of+C+-++Ord+18-03%27+AND+ParcelNo+IS+NOT+NULL&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&resultType=none&distance=0.0&units=esriSRUnit_Meter&returnGeodetic=false&outFields=parcelno&returnGeometry=true&multipatchOption=xyFootprint&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&returnExtentOnly=false&returnDistinctValues=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&resultOffset=&resultRecordCount=&returnZ=false&returnM=false&quantizationParameters=&sqlFormat=none&f=pjson&token=", function( data ) {
-     //console.log(data);
-     var new_Filter = ["in",'parcelno'];
-     for (var i = 0; i < data.features.length; i++) {
-       new_Filter.push(data.features[i].attributes.ParcelNo);
-     }
-     map.addLayer({
-      "id": "parcel-fill-cofc",
-      "type": "fill",
-      "source": "parcels",
-      'source-layer': 'parcelsgeojson',
-      'filter': new_Filter,
-      "paint": {
-        "fill-color":"#068A24",
-        "fill-opacity":0.5
-      }
-    });
-   });
-   $.getJSON("https://services2.arcgis.com/qvkbeam7Wirps6zC/ArcGIS/rest/services/Rental_Inspections/FeatureServer/0/query?where=ACTION_DESCRIPTION%3D%27Issue+Initial+Registration%27+AND+ParcelNo+IS+NOT+NULL&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&resultType=none&distance=0.0&units=esriSRUnit_Meter&returnGeodetic=false&outFields=parcelno&returnGeometry=true&multipatchOption=xyFootprint&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&returnExtentOnly=false&returnDistinctValues=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&resultOffset=&resultRecordCount=&returnZ=false&returnM=false&quantizationParameters=&sqlFormat=none&f=pjson&token=", function( data ) {
-     //console.log(data);
-     var new_Filter = ["in",'parcelno'];
-     for (var i = 0; i < data.features.length; i++) {
-       new_Filter.push(data.features[i].attributes.ParcelNo);
-     }
-     map.addLayer({
-      "id": "parcel-fill-initial",
-      "type": "fill",
-      "source": "parcels",
-      'source-layer': 'parcelsgeojson',
-      'filter': new_Filter,
-      "paint": {
-        "fill-color":"#114BC7",
-        "fill-opacity":0.5
-      }
-    });
-   });
-   $.getJSON("https://services2.arcgis.com/qvkbeam7Wirps6zC/ArcGIS/rest/services/Rental_Inspections/FeatureServer/0/query?where=ACTION_DESCRIPTION%3D%27Issue+Renewal+Registration%27+AND+ParcelNo+IS+NOT+NULL&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&resultType=none&distance=0.0&units=esriSRUnit_Meter&returnGeodetic=false&outFields=parcelno&returnGeometry=true&multipatchOption=xyFootprint&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&returnExtentOnly=false&returnDistinctValues=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&resultOffset=&resultRecordCount=&returnZ=false&returnM=false&quantizationParameters=&sqlFormat=none&f=pjson&token=", function( data ) {
-     //console.log(data);
-     var new_Filter = ["in",'parcelno'];
-     for (var i = 0; i < data.features.length; i++) {
-       new_Filter.push(data.features[i].attributes.ParcelNo);
-     }
-     map.addLayer({
-      "id": "parcel-fill-renewal",
-      "type": "fill",
-      "source": "parcels",
-      'source-layer': 'parcelsgeojson',
-      'filter': new_Filter,
-      "paint": {
-        "fill-color":"#114BC7",
-        "fill-opacity":0.5
-      }
-    });
-   });
+   addToggleLayer();
 };
 map.on('style.load', function(){
   addDataLayers();
@@ -580,7 +730,7 @@ map.on('load', function(window) {
   });
 });
 map.on('zoom', function() {
-  console.log(map.getZoom());
+  // console.log(map.getZoom());
   updateURLParams([map.getZoom()]);
 });
 document.getElementById('close-emergency-modal-btn').addEventListener('click',closeInfo);
