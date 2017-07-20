@@ -2,7 +2,7 @@
 
 Experimental map view with all the public information from the City of Detroit. The King of Views \('o')/
 
-## Maps Built with El Ray 
+## Maps Built with El Rey 
 
 [Photo Survey](https://cityofdetroit.github.io/photosurvey/app/)
 
