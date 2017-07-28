@@ -1,7 +1,14 @@
 "use strict";
 
-var panelModule = function (survey) {
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var panelModule = function (survey, template) {
+  var template = Object.create(templateModule);
   var panel = {
+    'viewStates': {
+      'dataSets': null,
+      'dataResults': null
+    },
     'title': '',
     'featureData': null,
     'displayType': '',
@@ -10,15 +17,43 @@ var panelModule = function (survey) {
     'tempHTML': [],
     'tempData': { 'registrationNumbers': 0, 'totalNumbers': 0 },
     'imageList': null,
+    changeViews: function changeViews(key) {
+      console.log(key.id);
+      if (key.className !== 'active') {
+        console.log('changing views');
+        activeView = key.id;
+        switch (key.id) {
+          case 'data-sets-view-btn':
+            console.log('loading data sets');
+            document.querySelector('.top-nav-item > .active').className = '';
+            document.querySelector('#' + key.id).className = 'active';
+            document.querySelector('#panel-content').innerHTML = template.getTemplate(activeView, null, null);
+            break;
+          case 'data-results-view-btn':
+            console.log('loading data results');
+            document.querySelector('.top-nav-item > .active').className = '';
+            document.querySelector('#' + key.id).className = 'active';
+            document.querySelector('#panel-content').innerHTML = this.viewStates.dataSets;
+            break;
+          default:
+            console.log('loading info');
+            document.querySelector('.top-nav-item > .active').className = '';
+            document.querySelector('#' + key.id).className = 'active';
+            document.querySelector('#panel-content').innerHTML = template.getTemplate(activeView, null, null);
+        }
+      } else {
+        console.log('view is already active');
+      }
+    },
     updateImageList: function updateImageList(arr) {
       panel.imageList = arr;
       console.log(panel.imageList);
     },
-    getSurveyImageIDs: function () {
+    getSurveyImageIDs: function getSurveyImageIDs() {
       console.log(panel.getParcelNumber());
       console.log(this.getParcelNumber());
       console.log(this.parcelNumer);
-      let tempParcel = panel.getParcelNumber();
+      var tempParcel = panel.getParcelNumber();
       tempParcel = tempParcel.replace(/\./g, '_');
       console.log(tempParcel);
       $.getJSON("https://apis.detroitmi.gov/photo_survey/" + tempParcel + "/", function (data) {
@@ -26,73 +61,66 @@ var panelModule = function (survey) {
         if (data.images.length > 0) {
           document.getElementById('parcel-image').innerHTML = '<h5 style="text-align:center">LOADING IMAGE<span class="dot-1">.</span><span class="dot-2">.</span><span class="dot-3">.</span></h5>';
           panel.updateImageList(data.images);
-          panel.getBase64Data();
+          panel.loadImage(data.images);
         } else {
           console.log('no images found');
         }
       });
     },
-    getBase64Data: function () {
-      console.log(panel.imageList);
-      let tempImageList = panel.imageList;
-      $.getJSON("https://apis.detroitmi.gov/photo_survey/image/" + tempImageList[0] + "/", function (data) {
-        panel.loadImage(data);
-      });
+    loadImage: function loadImage(data) {
+      document.getElementById('parcel-image').innerHTML = '<img src="' + data[0] + '" alt="parcel image"></img>';
     },
-    loadImage: function (data) {
-      document.getElementById('parcel-image').innerHTML = '<img src="data:image/jpeg;base64,' + data + '" alt="parcel image"></img>';
-    },
-    setParcelNumber: function (parcel) {
+    setParcelNumber: function setParcelNumber(parcel) {
       console.log(parcel);
       panel.parcelNumer = parcel;
     },
-    getParcelNumber: function () {
+    getParcelNumber: function getParcelNumber() {
       return panel.parcelNumer;
     },
-    createPanel: function (type) {
+    createPanel: function createPanel(type) {
       this.setDisplayType(type);
       this.clearPanel();
       this.createPanelData();
     },
-    setDisplayType: function (type) {
+    setDisplayType: function setDisplayType(type) {
       this.displayType = type;
     },
-    getDisplayType: function () {
+    getDisplayType: function getDisplayType() {
       return this.displayType;
     },
-    setTempData: function (obj) {
+    setTempData: function setTempData(obj) {
       panel.tempData.registrationNumbers = obj.registrationNumbers;
       panel.tempData.totalNumbers = obj.totalNumbers;
     },
-    getTempData: function () {
+    getTempData: function getTempData() {
       return panel.tempData;
     },
-    setTempHTML: function (obj) {
+    setTempHTML: function setTempHTML(obj) {
       if (obj.constructor === Array) {
         panel.tempHTML = obj;
       } else {
         panel.tempHTML.length = 0;
       }
     },
-    getTempHTML: function () {
+    getTempHTML: function getTempHTML() {
       return panel.tempHTML;
     },
-    getTempFeatureData: function () {
+    getTempFeatureData: function getTempFeatureData() {
       return panel.featureData;
     },
-    setTempFeatureData: function (feature) {
+    setTempFeatureData: function setTempFeatureData(feature) {
       panel.featureData = feature;
     },
-    setPanelTitle: function (title) {
+    setPanelTitle: function setPanelTitle(title) {
       panel.title = title;
     },
-    setParcelData: function (parcel) {
+    setParcelData: function setParcelData(parcel) {
       panel.parcelData = parcel;
     },
-    getParcelData: function () {
+    getParcelData: function getParcelData() {
       return panel.parcelData;
     },
-    flyToPosition: function (params) {
+    flyToPosition: function flyToPosition(params) {
       console.log(params);
       map.flyTo({
         center: [params.lng, params.lat],
@@ -107,12 +135,12 @@ var panelModule = function (survey) {
 
         // This can be any easing function: it takes a number between
         // 0 and 1 and returns another number between 0 and 1.
-        easing: function (t) {
+        easing: function easing(t) {
           return t;
         }
       });
     },
-    loadPanel: function () {
+    loadPanel: function loadPanel() {
       console.log(this.getDisplayType());
       console.log(this.displayType);
       switch (true) {
@@ -120,55 +148,50 @@ var panelModule = function (survey) {
           console.log('loading parcel data');
           var localParcelData = this.getParcelData();
           console.log(localParcelData);
-          console.log(typeof localParcelData);
+          console.log(typeof localParcelData === 'undefined' ? 'undefined' : _typeof(localParcelData));
           console.log(this.getTempHTML());
-          document.querySelector('.parcel-info.rental-info').innerHTML = '';
-          document.querySelector('.info-container > .rental').innerHTML = '<article class="form-btn" onclick="survey.startSurvey()">START SURVEY</article>';
-          document.querySelector('.info-container > .not-rental').innerHTML = '';
-          localParcelData.propstreetcombined !== 'null' ? document.querySelector('.info-container > .street-name').innerHTML = localParcelData.propstreetcombined : document.querySelector('.info-container > .street-name').innerHTML = 'Loading...';
-          document.querySelector('.parcel-data.owner').innerHTML = this.tempHTML[3];
-          document.querySelector('.parcel-data.building').innerHTML = this.tempHTML[4];
+          var templateParcel = {
+            'title': null
+          };
+          localParcelData.propstreetcombined !== 'null' ? templateParcel.title = localParcelData.propstreetcombined : templateParcel.title = 'Loading...';
+          this.viewStates.dataSets = template.getTemplate(activeView, templateParcel, 'parcel');
+          document.querySelector('#panel-content').innerHTML = this.viewStates.dataSets;
           map.setFilter("parcel-fill-hover", ["==", "parcelno", currentURLParams.parcel]);
           panel.getSurveyImageIDs();
           break;
         case this.displayType === 'neighborhood':
-          document.querySelector('.info-container > .street-name').innerHTML = this.title;
-          document.querySelector('.info-container > .rental').innerHTML = '';
-          document.querySelector('.info-container > .total-rentals').innerHTML = "<h4>TOTAL PROPERTIES</h4><p>0</p>";
-          document.querySelector('.overall-number').innerHTML = this.tempHTML;
-          document.querySelector('.info-container > .total-rentals > p').innerHTML = this.tempData.totalNumbers;
+          var templateNeighborhood = {
+            'title': this.title,
+            'total': this.tempData.totalNumbers,
+            'overall': this.tempHTML
+          };
+          document.querySelector('#panel-content').innerHTML = template.getTemplate(activeView, templateNeighborhood, 'neighborhood');
           break;
         case this.displayType === 'district':
-          document.querySelector('.info-container > .street-name').innerHTML = this.title;
-          document.querySelector('.info-container > .rental').innerHTML = '';
-          document.querySelector('.info-container > .total-rentals').innerHTML = "<h4>TOTAL PROPERTIES</h4><p>0</p>";
-          document.querySelector('.overall-number').innerHTML = this.tempHTML;
-          document.querySelector('.info-container > .total-rentals > p').innerHTML = this.tempData.totalNumbers;
+          var templateDistrict = {
+            'title': this.title,
+            'total': this.tempData.totalNumbers,
+            'overall': this.tempHTML
+          };
+          document.querySelector('#panel-content').innerHTML = template.getTemplate(activeView, templateDistrict, 'district');
           break;
         default:
-          document.querySelector('.info-container > .street-name').innerHTML = this.title;
-          document.querySelector('.info-container > .rental').innerHTML = '<article class="form-btn" onclick="survey.startSurvey()">START SURVEY</article>';
-          document.querySelector('.info-container > .total-rentals').innerHTML = "<h4>TOTAL PROPERTIES</h4><p>0</p>";
-          document.querySelector('.overall-number').innerHTML = this.tempHTML;
-          document.querySelector('.info-container > .total-rentals > p').innerHTML = this.tempData.totalNumbers;
+          var templateCity = {
+            'title': this.title,
+            'total': this.tempData.totalNumbers,
+            'overall': this.tempHTML
+          };
+          document.querySelector('#panel-content').innerHTML = template.getTemplate(activeView, templateCity, 'city');
       }
       document.querySelector('#info').className === 'active' ? 0 : document.querySelector('#info').className = 'active';
     },
-    clearPanel: function () {
+    clearPanel: function clearPanel() {
       console.log('clearing panel');
       this.tempData.registrationNumbers = 0;
       this.tempData.totalNumbers = 0;
       this.setTempHTML('clear');
       console.log(this.tempHTML);
-      document.querySelector('.overall-number').innerHTML = '';
-      document.querySelector('.parcel-info').innerHTML = '';
-      document.querySelector('.info-container > .not-rental').innerHTML = '';
-      document.querySelector('.info-container > .rental').innerHTML = '';
-      document.querySelector('.info-container > .total-rentals').innerHTML = '';
-      document.querySelector('.parcel-data.owner').innerHTML = '';
-      document.querySelector('.parcel-data.building').innerHTML = '';
-      document.querySelector('.parcel-info.display-section').innerHTML = '';
-      document.getElementById('parcel-image').innerHTML = '';
+      document.querySelector('#panel-content').innerHTML = '';
     },
     switchParcelDataViews: function switchParcelDataViews(e) {
       //cons.log(e.getAttribute('data-view'));
@@ -216,7 +239,7 @@ var panelModule = function (survey) {
 
       }
     },
-    createFeatureData: function () {
+    createFeatureData: function createFeatureData() {
       switch (true) {
         case currentURLParams.district !== '':
           console.log(currentURLParams.district.split('%20')[1]);
@@ -243,7 +266,7 @@ var panelModule = function (survey) {
           panel.createPanel('parcel');
       }
     },
-    createPanelData: function () {
+    createPanelData: function createPanelData() {
       console.log(this.displayType);
       console.log(this.getDisplayType());
       switch (true) {
@@ -259,8 +282,6 @@ var panelModule = function (survey) {
             panel.setDisplayType('parcel');
             console.log(parcel);
             console.log(panel.getDisplayType());
-            tempParcelDataHTML[3] = '<div class="data-view-btn" data-view="owner" onclick="mapPanel.switchParcelDataViews(this)">OWNER INFORMATION <span>&#10095;</span></div>';
-            tempParcelDataHTML[4] = '<div class="data-view-btn" data-view="building" onclick="mapPanel.switchParcelDataViews(this)">PROPERTY INFORMATION <span>&#10095;</span></div>';
             panel.setTempHTML(tempParcelDataHTML);
             panel.setParcelData(parcel);
             panel.loadPanel();
@@ -345,4 +366,4 @@ var panelModule = function (survey) {
     }
   };
   return panel;
-}(window, surveyModule);
+}(window, surveyModule, templateModule);

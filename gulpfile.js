@@ -6,7 +6,13 @@ var imagemin = require('gulp-imagemin');
 var cache = require('gulp-cache');
 var del = require('del');
 var runSequence = require('run-sequence');
-var babel = require('gulp-babel');
+var babel = require("gulp-babel");
+
+gulp.task("babel", function () {
+  return gulp.src("app/js/**/*.js")
+    .pipe(babel())
+    .pipe(gulp.dest("dist"));
+});
 
 gulp.task('sass', function() {
   return gulp.src('app/scss/**/*.scss') // Gets all files ending with .scss in app/scss

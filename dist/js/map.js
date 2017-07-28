@@ -3,6 +3,8 @@
 
 var mapPanel = Object.create(panelModule);
 var survey = Object.create(surveyModule);
+var activeView = 'data-results-view-btn';
+var activeBoundary = 'district';
 var bounds = [[-83.3437, 42.2102], // Southwest coordinates
 [-82.8754, 42.5197] // Northeast coordinates
 ];
@@ -55,8 +57,8 @@ map.on("style.load", function () {
   });
 });
 mly.on(Mapillary.Viewer.nodechanged, function (node) {
-  updateURLParams(['', '', '', '', '', '', 'on']);
-  document.querySelector('.survey-display > .street-name > h1').innerHTML = 'LOADING<span class="dot-1">.</span><span class="dot-2">.</span><span class="dot-3">.</span>';
+  updateURLParams(['', '', '', '', '', '', node.key]);
+  document.querySelector('#survey-note-card > .street-name > h1').innerHTML = 'LOADING<span class="dot-1">.</span><span class="dot-2">.</span><span class="dot-3">.</span>';
   var lngLat = [node.latLon.lon, node.latLon.lat];
   var data = {
     type: "Feature",
@@ -83,7 +85,7 @@ mly.on(Mapillary.Viewer.nodechanged, function (node) {
 
       // This can be any easing function: it takes a number between
       // 0 and 1 and returns another number between 0 and 1.
-      easing: function (t) {
+      easing: function easing(t) {
         return t;
       }
     });
@@ -131,7 +133,7 @@ window.onload = function () {
             curve: 1, // change the speed at which it zooms out
             // This can be any easing function: it takes a number between
             // 0 and 1 and returns another number between 0 and 1.
-            easing: function (t) {
+            easing: function easing(t) {
               return t;
             }
           });
@@ -148,7 +150,7 @@ window.onload = function () {
         curve: 1, // change the speed at which it zooms out
         // This can be any easing function: it takes a number between
         // 0 and 1 and returns another number between 0 and 1.
-        easing: function (t) {
+        easing: function easing(t) {
           return t;
         }
       });
@@ -172,7 +174,7 @@ window.onload = function () {
         curve: 1, // change the speed at which it zooms out
         // This can be any easing function: it takes a number between
         // 0 and 1 and returns another number between 0 and 1.
-        easing: function (t) {
+        easing: function easing(t) {
           return t;
         }
       });
@@ -293,7 +295,7 @@ var startGeocoderResults = function startGeocoderResults(ev) {
 
     // This can be any easing function: it takes a number between
     // 0 and 1 and returns another number between 0 and 1.
-    easing: function (t) {
+    easing: function easing(t) {
       return t;
     }
   });
@@ -394,7 +396,7 @@ var closeInfo = function closeInfo() {
 
     // This can be any easing function: it takes a number between
     // 0 and 1 and returns another number between 0 and 1.
-    easing: function (t) {
+    easing: function easing(t) {
       return t;
     }
   });
@@ -408,8 +410,7 @@ var closeSurvey = function closeSurvey() {
   }
   console.log(document.querySelector('#info').className === 'active');
   document.querySelector('#survey').className === 'active' ? document.querySelector('#survey').className = '' : 0;
-  document.querySelector('#map-survey').className === 'survey-on' ? document.querySelector('#map-survey').className = '' : 0;
-  document.querySelector('#map-survey > .survey-display').className === 'survey-display' ? 0 : document.querySelector('#map-survey > .survey-display').className = 'survey-display';
+  document.querySelector('#survey-note-card').className === '' ? 0 : document.querySelector('#survey-note-card').className = '';
   document.querySelector('#map').className === 'mapboxgl-map' ? 0 : document.querySelector('#map').className = 'mapboxgl-map';
   document.querySelector('#legend').className === 'survey-on' ? document.querySelector('#legend').className = '' : 0;
   document.querySelector('.mapboxgl-control-container').className === 'mapboxgl-control-container' ? 0 : document.querySelector('.mapboxgl-control-container').className = 'mapboxgl-control-container';
@@ -432,7 +433,7 @@ var closeSurvey = function closeSurvey() {
 
     // This can be any easing function: it takes a number between
     // 0 and 1 and returns another number between 0 and 1.
-    easing: function (t) {
+    easing: function easing(t) {
       return t;
     }
   });
