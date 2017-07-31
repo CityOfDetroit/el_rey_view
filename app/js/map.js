@@ -1,9 +1,7 @@
 "use strict";
 // ================ variables ======================
-var mapPanel = Object.create(panelModule);
-var survey = Object.create(surveyModule);
-var activeView = 'data-results-view-btn';
-var activeBoundary = 'district';
+
+
 var bounds = [
     [		-83.3437, 	42.2102], // Southwest coordinates
     [		-82.8754, 	42.5197]  // Northeast coordinates
