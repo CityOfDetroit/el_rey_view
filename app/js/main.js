@@ -1,16 +1,9 @@
 'use strict';
+import Router from './router.class.js';
 (function(){
-  var router = new Router({
-    'zoom'        : 0,
-    'lng'         : 0,
-    'lat'         : 0,
-    'dataSets'    : '',
-    'parcel'      : '',
-    'boundary'    : '',
-    'view'        : ''
-  });
-  var mapPanel = Object.create(panelModule);
-  var survey = Object.create(surveyModule);
-  var activeView = 'data-results-view-btn';
-  var activeBoundary = 'district';
+  var router = new Router();
+  router.updateURLParams({'zoom':13,'lng':-83.15,'lat': 42.36});
+  var currenetRouting = router.loadURLRouting();
+  console.log(router);
+  console.log(currenetRouting);
 })(window);
