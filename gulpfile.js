@@ -1,11 +1,12 @@
 'use strict';
-'use strict';
 
 var gulp = require('gulp');
 var babelify = require('babelify');
 var browserify = require('browserify');
 var source = require('vinyl-source-stream');
 var sass = require('gulp-sass');
+var browserSync = require('browser-sync').create();
+var jasmine = require('gulp-jasmine');
 
 gulp.task('build', function () {
     browserify({
@@ -18,6 +19,12 @@ gulp.task('build', function () {
     .pipe(gulp.dest('./dist/js'));
 });
 
+gulp.task('test', () =>
+    gulp.src('test/test.js')
+        // gulp-jasmine works on filepaths so you can't have any plugins before it
+        .pipe(jasmine())
+);
+
 gulp.task('copy', function () {
     gulp.src('app/index.html')
     .pipe(gulp.dest('./dist'));
@@ -29,13 +36,24 @@ gulp.task('sass', function() {
     .pipe(gulp.dest('./dist/css'));
 });
 
+gulp.task('browserSync', function() {
+  browserSync.init({
+    server: {
+      baseDir: 'dist'
+    },
+  });
+});
+
 gulp.task('watch', function () {
     gulp.watch('app/**/*.js', ['build']);
     gulp.watch('app/*.html', ['copy']);
     gulp.watch('app/**/*.scss', ['sass']);
+    gulp.watch('app/scss/**/*.scss', ['sass']);
+    gulp.watch('dist/**/*.js', browserSync.reload);
+    gulp.watch('dist/*.html', browserSync.reload);
 });
 
-gulp.task('default', ['copy', 'sass', 'build', 'watch']);
+gulp.task('default', ['browserSync', 'copy', 'sass', 'build', 'watch']);
 // required dependencies
 // var gulp = require('gulp');
 // var sass = require('gulp-sass');
@@ -46,41 +64,6 @@ gulp.task('default', ['copy', 'sass', 'build', 'watch']);
 // var runSequence = require('run-sequence');
 // var babel = require("gulp-babel");
 //
-// gulp.task("babel", function () {
-//   return gulp.src("app/js/**/*.js")
-//     .pipe(babel())
-//     .pipe(gulp.dest("dist"));
-// });
-//
-// gulp.task('sass', function() {
-//   return gulp.src('app/scss/**/*.scss') // Gets all files ending with .scss in app/scss
-//     .pipe(sass())
-//     .pipe(gulp.dest('app/css'))
-//     .pipe(browserSync.reload({
-//       stream: true
-//     }));
-// });
-//
-// gulp.task('browserSync', function() {
-//   browserSync.init({
-//     server: {
-//       baseDir: 'app'
-//     },
-//   });
-// });
-//
-// gulp.task('babel', function(){
-//   gulp.src('app/js/**/*.js')
-//     .pipe(babel())
-//     .pipe(gulp.dest('dist/js'))
-// });
-//
-// gulp.task('watch', ['browserSync', 'sass'], function (){
-//   gulp.watch('app/scss/**/*.scss', ['sass']);
-//   // Reloads the browser whenever HTML or JS files change
-//   gulp.watch('app/*.html', browserSync.reload);
-//   gulp.watch('app/js/**/*.js', browserSync.reload);
-// });
 //
 // gulp.task('images', function(){
 //   return gulp.src('app/img/**/*.+(png|jpg|jpeg|gif|svg)')
