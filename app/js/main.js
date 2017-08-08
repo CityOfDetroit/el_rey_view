@@ -107,32 +107,56 @@ import View from './view.class.js';
           },
           "filter": ["==", "name", ""]
         },
-        // {
-        //   "id": "neighborhoods-borders",
-        //   "type": "line",
-        //   "source": "neighborhoods",
-        //   "minzoom": 12,
-        //   "maxzoom": 15.5,
-        //   "layout": {},
-        //   "paint": {
-        //     "line-color": "#004b90",
-        //     "line-width": 3
-        //   }
-        // },
-        // {
-        //   "id": "neighborhoods-labels",
-        //   "type": "symbol",
-        //   "source": "neighborhoods-labels",
-        //   "minzoom": 12,
-        //   "maxzoom": 15.5,
-        //   "layout": {
-        //     "text-font": ["Mark SC Offc Pro Bold"],
-        //     "text-field": "{name}"
-        //   },
-        //   "paint": {
-        //     "text-color": "black"
-        //   }
-        // },
+        {
+          "id": "neighborhoods-fill",
+          "type": "fill",
+          "source": "neighborhoods",
+          "minzoom": 12,
+          "maxzoom": 15.5,
+          "paint":{
+            "fill-color": '#fff',
+            'fill-opacity': 0
+          }
+        },
+        {
+          "id": "neighborhoods-fill-hover",
+          "type": "fill",
+          "source": "councils",
+          "minzoom": 12,
+          "maxzoom": 15.5,
+          "layout": {},
+          "paint": {
+            "fill-color": "#0065c3",
+            "fill-opacity": .5
+          },
+          "filter": ["==", "name", ""]
+        },
+        {
+          "id": "neighborhoods-borders",
+          "type": "line",
+          "source": "neighborhoods",
+          "minzoom": 12,
+          "maxzoom": 15.5,
+          "layout": {},
+          "paint": {
+            "line-color": "#004b90",
+            "line-width": 3
+          }
+        },
+        {
+          "id": "neighborhoods-labels",
+          "type": "symbol",
+          "source": "neighborhoods-labels",
+          "minzoom": 12,
+          "maxzoom": 15.5,
+          "layout": {
+            "text-font": ["Mark SC Offc Pro Bold"],
+            "text-field": "{name}"
+          },
+          "paint": {
+            "text-color": "black"
+          }
+        },
          {
            "id": "parcel-fill",
            "type": "fill",
@@ -170,4 +194,6 @@ import View from './view.class.js';
     }
   });
   console.log(view);
+  setTimeout(function(){ view.map.changeBaseMap("satellite"); }, 3000);
+  setTimeout(function(){ view.map.changeBaseMap("street"); }, 4000);
 })(window);

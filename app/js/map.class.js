@@ -20,6 +20,7 @@ export default class Map {
       zoom: init.zoom, // starting zoom
       keyboard: true
     });
+    this.styleURL = init.styleURL;
     this.baseLayers = {
       street: init.baseLayers.street,
       satellite: init.baseLayers.satellite
@@ -39,17 +40,23 @@ export default class Map {
         parent.setFilter("council-fill-hover", ["==", "districts", features[0].properties.districts]);
       }else{
         parent.setFilter("council-fill-hover", ["==", "districts", ""]);
-        // features = parent.queryRenderedFeatures(e.point, {
-        //   layers: ["neighborhoods-fill"]
-        // });
-        // if (!features.length) {
-        //   features = this.map.queryRenderedFeatures(e.point, {
-        //     layers: ["parcel-fill"]
-        //   });
-        // }
+        features = parent.queryRenderedFeatures(e.point, {
+          layers: ["neighborhoods-fill"]
+        });
+        if (features.length) {
+          parent.setFilter("neighborhoods-fill-hover", ["==", "name", features[0].properties.name]);
+        }else{
+          parent.setFilter("neighborhoods-fill-hover", ["==", "name", ""]);
+        }
       }
       parent.getCanvas().style.cursor = (features.length) ? 'pointer' : '';
     });
+    this.map.on('click', function (e) {
+      console.log(e);
+    });
+  }
+  changeBaseMap(baseMap){
+    this.map.setStyle(`${this.styleURL}/${this.baseLayers[baseMap]}`);
   }
   loadMap() {
     let sourcePromise = new Promise((resolve, reject) => {
